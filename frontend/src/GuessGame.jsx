@@ -265,6 +265,7 @@ const saveGameState = () => {
             <div className="flex items-center text-sm text-gray-500">
               <Clock className="w-4 h-4 mr-1" />
               <span>Next player in: {timeUntilReset}</span>
+              <span>Play the game here: https://darling-sundae-489a63.netlify.app/</span>
             </div>
           </div>
         </CardHeader>
