@@ -189,7 +189,7 @@ const saveGameState = () => {
       g.correct ? '🟩' : '🟥'
     ).join('');
     
-    const text = `Football Player Guessing Game ${gameState.currentDate}\n${scoreDisplay}\nNext player in ${timeUntilReset}!`;
+    const text = `Football Player Guessing Game ${gameState.currentDate}\n${scoreDisplay}\nNext player in ${timeUntilReset}! \n Play the game here: https://darling-sundae-489a63.netlify.app/`;
     
     if (navigator.share) {
       navigator.share({
@@ -265,7 +265,6 @@ const saveGameState = () => {
             <div className="flex items-center text-sm text-gray-500">
               <Clock className="w-4 h-4 mr-1" />
               <span>Next player in: {timeUntilReset}</span>
-              <span>Play the game here: https://darling-sundae-489a63.netlify.app/</span>
             </div>
           </div>
         </CardHeader>
