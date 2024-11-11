@@ -10,7 +10,7 @@ from PIL import Image
 from datetime import datetime, timezone, timedelta
 import json
 import os
-import config
+from config import HEADERS
 from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
@@ -18,9 +18,6 @@ app = Flask(__name__)
 CORS(app)
 
 # CORS(app, resources={r"/api/*": {"origins": "*", "supports_credentials": True}})
-
-proxies = config.proxies
-HEADERS = config.HEADERS
 
 CACHE_FILE = 'daily_player_cache.json'
 
@@ -74,7 +71,7 @@ class DailyPlayerGame:
             for league in leagues:
                 # url = "https://api-football-v1.p.rapidapi.com/v3/players/topscorers"
                 url =  "https://v3.football.api-sports.io/players/topscorers"
-                response = requests.get(url, headers=HEADERS, proxies=proxies, params={'league': league, 'season': '2022'})
+                response = requests.get(url, headers=HEADERS, params={'league': league, 'season': '2022'})
                 if response.status_code == 200:
                     players = response.json().get('response', [])
                     self.player_pool.extend(players)
@@ -158,7 +155,7 @@ class DailyPlayerGame:
     def _process_image(self):
         """Process and blur player image"""
         try:
-            response = requests.get(self.current_player['image_url'], proxies=proxies)
+            response = requests.get(self.current_player['image_url'])
             img = Image.open(BytesIO(response.content))
             img_array = np.array(img)
             

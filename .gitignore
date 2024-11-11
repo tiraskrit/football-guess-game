@@ -18,3 +18,4 @@ backend/config.py
 backend/*.pyc
 backend/*.pyo
 backend/__pycache__/
+backend/.env
