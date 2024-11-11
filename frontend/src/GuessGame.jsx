@@ -4,6 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import AutocompleteInput from '@/components/ui/AutocompleteInput';
+import { API_URL } from './api.js';
+
+
 
 const GuessGame = () => {
   const [gameState, setGameState] = useState({
@@ -63,7 +66,7 @@ const saveGameState = () => {
   const fetchGameState = async () => {
     setGameState(prev => ({ ...prev, loading: true }));
     try {
-      const response = await fetch('http://localhost:5000/api/game-state');
+      const response = await fetch(`${API_URL}/api/game-state`);
       const data = await response.json();
       
       setGameState(prev => ({
@@ -103,7 +106,7 @@ const saveGameState = () => {
   
   const fetchPlayerNames = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/player-names');
+      const response = await fetch(`${API_URL}/api/player-names`);
       const playerNames = await response.json();
       setPlayers(playerNames);
       setFilteredPlayers(playerNames);
@@ -118,7 +121,7 @@ const saveGameState = () => {
     if (!guess.trim()) return;
     
     try {
-      const response = await fetch('http://localhost:5000/api/guess', {
+      const response = await fetch(`${API_URL}/api/guess`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
