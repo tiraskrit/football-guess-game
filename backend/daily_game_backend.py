@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
 import requests
 import random
@@ -11,12 +11,13 @@ from datetime import datetime, timezone, timedelta
 import json
 import os
 import config
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 
-#CORS(app)
+CORS(app)
 
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+# CORS(app, resources={r"/api/*": {"origins": "*", "supports_credentials": True}})
 
 proxies = config.proxies
 HEADERS = config.HEADERS
@@ -41,11 +42,18 @@ class DailyPlayerGame:
             try:
                 with open(CACHE_FILE, 'r') as f:
                     cache = json.load(f)
-                    if cache.get('date') == self._get_current_date():
+                    cached_date = cache.get('date')
+
+                    # Compare the cached date with the current date
+                    if cached_date == self._get_current_date():
                         return cache.get('player')
-            except Exception:
-                pass
+                    else:
+                        # If the date is from a previous day, clear the cache
+                        return None
+            except (json.JSONDecodeError, KeyError):
+                return None
         return None
+
     
     def _save_cache(self, player_data):
         """Save player data to cache"""
@@ -198,6 +206,16 @@ class DailyPlayerGame:
             hour=0, minute=0, second=0, microsecond=0
         )
         return int((tomorrow - now).total_seconds())
+    
+    def daily_check(self):
+        """Check if the cache needs to be reset and load new data if required."""
+        current_date = self._get_current_date()
+        if self.last_reset_date != current_date:
+            self.current_player = None  # Invalidate current player data
+            new_player = self._load_cache()  # Attempt to load or refresh cache
+            if not new_player:
+                # Logic to fetch new player and call _save_cache() if needed
+                pass  # Replace with actual fetching logic
 
 game = DailyPlayerGame()
 
@@ -206,11 +224,14 @@ def get_game_state():
     player = game.get_daily_player()
     next_reset = game.get_next_reset_time()
     
+    has_played = request.cookies.get('last_played_date') == game.last_reset_date
+   
     return jsonify({
         'blurred_image': player['blurred_image'],
         'game_id': player['id'],
         'next_reset': next_reset,
-        'current_date': game.last_reset_date
+        'current_date': game.last_reset_date,
+        'has_played': has_played
     })
 
 @app.route('/api/player-names', methods=['GET'])
@@ -236,6 +257,13 @@ def check_guess():
     if not game.current_player:
         return jsonify({'error': 'No active game'}), 400
     
+    # Check if user has already played today
+    if request.cookies.get('last_played_date') == game.last_reset_date:
+        return jsonify({
+            'error': 'Already played today',
+            'next_reset': game.get_next_reset_time()
+        }), 403
+    
     correct = guess == game.current_player['name'].lower()
     
     response = {
@@ -252,7 +280,20 @@ def check_guess():
         response['hint_image'] = None
         response['image_url'] = game.current_player['image_url']
         response['player_name'] = game.current_player['name']
-        return jsonify(response)
+        
+        # Set cookie only when game is over (either won or lost)
+        resp = make_response(jsonify(response))
+        # Set cookie to expire at midnight UTC
+        expires = datetime.now(timezone.utc).replace(hour=23, minute=59, second=59)
+        resp.set_cookie(
+            'last_played_date',
+            game.last_reset_date,
+            expires=expires,
+            secure=True,
+            httponly=True,
+            samesite='Strict'
+        )
+        return resp
     
     # Regular hint progression
     if not correct and current_hint_level < 5:
@@ -272,4 +313,8 @@ def check_guess():
     return jsonify(response)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Start a scheduler to run daily_check() every 24 hours
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(game.daily_check, 'interval', days=1, start_date='2024-11-09 00:00:00')
+    scheduler.start()
+    app.run()
