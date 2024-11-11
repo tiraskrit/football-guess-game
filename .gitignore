@@ -14,7 +14,6 @@ frontend/.vite-cache/
 
 
 # Flask configuration
-backend/config.py
 backend/*.pyc
 backend/*.pyo
 backend/__pycache__/
