@@ -189,7 +189,7 @@ const saveGameState = () => {
       g.correct ? '🟩' : '🟥'
     ).join('');
     
-    const text = `Football Player Guessing Game ${gameState.currentDate}\n${scoreDisplay}\nNext player in ${timeUntilReset}! \nPlay the game here: https://darling-sundae-489a63.netlify.app/`;
+    const text = `Football Player Guessing Game ${gameState.currentDate}\n${scoreDisplay}\nNext player in ${timeUntilReset}! \nPlay the game here: https://daily-football.netlify.app/`;
     
     if (navigator.share) {
       navigator.share({
