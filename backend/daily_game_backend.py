@@ -221,14 +221,11 @@ def get_game_state():
     player = game.get_daily_player()
     next_reset = game.get_next_reset_time()
     
-    has_played = request.cookies.get('last_played_date') == game.last_reset_date
-   
     return jsonify({
         'blurred_image': player['blurred_image'],
         'game_id': player['id'],
         'next_reset': next_reset,
         'current_date': game.last_reset_date,
-        'has_played': has_played
     })
 
 @app.route('/api/player-names', methods=['GET'])
@@ -254,13 +251,6 @@ def check_guess():
     if not game.current_player:
         return jsonify({'error': 'No active game'}), 400
     
-    # Check if user has already played today
-    if request.cookies.get('last_played_date') == game.last_reset_date:
-        return jsonify({
-            'error': 'Already played today',
-            'next_reset': game.get_next_reset_time()
-        }), 403
-    
     correct = guess == game.current_player['name'].lower()
     
     response = {
@@ -278,18 +268,7 @@ def check_guess():
         response['image_url'] = game.current_player['image_url']
         response['player_name'] = game.current_player['name']
         
-        # Set cookie only when game is over (either won or lost)
         resp = make_response(jsonify(response))
-        # Set cookie to expire at midnight UTC
-        expires = datetime.now(timezone.utc).replace(hour=23, minute=59, second=59)
-        resp.set_cookie(
-            'last_played_date',
-            game.last_reset_date,
-            expires=expires,
-            secure=True,
-            httponly=True,
-            samesite='Strict'
-        )
         return resp
     
     # Regular hint progression

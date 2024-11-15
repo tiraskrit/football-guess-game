@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import AutocompleteInput from '@/components/ui/AutocompleteInput';
 import { API_URL } from './api.js';
-
-
+import RulesDialog from '@/components/RulesDialog';
 
 const GuessGame = () => {
   const [gameState, setGameState] = useState({
@@ -27,6 +26,7 @@ const GuessGame = () => {
   const [timeUntilReset, setTimeUntilReset] = useState('');
   const [players, setPlayers] = useState([]);
   const [filteredPlayers, setFilteredPlayers] = useState([]);
+  const [showRules, setShowRules] = useState(true);
 
   const formatTimeUntilReset = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -343,6 +343,7 @@ const saveGameState = () => {
           )}
         </CardContent>
       </Card>
+      <RulesDialog open={showRules} onClose={() => setShowRules(false)} />
     </div>
   );
 };
